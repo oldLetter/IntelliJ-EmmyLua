@@ -194,4 +194,8 @@ function package.searchpath(name, path, sep, rep) end
 ---@return any
 function require(modname) end
 
+---@param classname string
+---@return UClass
+function import(classname) end
+
 return package

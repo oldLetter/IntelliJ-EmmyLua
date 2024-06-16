@@ -21,10 +21,12 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.tang.intellij.lua.lang.LuaFileType
 import com.tang.intellij.lua.lang.LuaIcons
 import com.tang.intellij.lua.lang.type.LuaString
+import com.tang.intellij.lua.project.LuaProjectSettings
 import com.tang.intellij.lua.project.LuaSourceRootManager
 
 /**
@@ -54,11 +56,17 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
         for (sourceRoot in sourceRoots) {
             addAllFiles(project, completionResultSet, null, sourceRoot.children)
         }
+        for (sourcePath in LuaProjectSettings.getInstance(project).sourceRoot){
+            val file = LocalFileSystem.getInstance().findFileByPath(sourcePath);
+            if (file != null) {
+                addAllFiles(project, completionResultSet, null, file.children)
+            }
+        }
     }
 
     private fun addAllFiles(project: Project, completionResultSet: CompletionResultSet, pck: String?, children: Array<VirtualFile>) {
         for (child in children) {
-            if (!LuaSourceRootManager.getInstance(project).isInSource(child))
+            if (child.isDirectory && child.name.startsWith("."))
                 continue
 
             val fileName = FileUtil.getNameWithoutExtension(child.name)

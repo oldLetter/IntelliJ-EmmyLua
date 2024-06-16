@@ -32,7 +32,7 @@ import java.nio.charset.Charset
 @State(name = "LuaSettings", storages = [(Storage("emmy.xml"))])
 class LuaSettings : PersistentStateComponent<LuaSettings> {
     //自定义require函数，参考constructorNames
-    var requireLikeFunctionNames: Array<String> = arrayOf("require")
+    var requireLikeFunctionNames: Array<String> = arrayOf("require","kg_require")
 
     var constructorNames: Array<String> = arrayOf("new", "get")
 
@@ -60,6 +60,8 @@ class LuaSettings : PersistentStateComponent<LuaSettings> {
      * 使用泛型
      */
     var enableGeneric: Boolean = false
+
+    var enableStringIntelliSense: Boolean = false
 
     /**
      * (KB)
@@ -114,6 +116,10 @@ class LuaSettings : PersistentStateComponent<LuaSettings> {
 
         fun isRequireLikeFunctionName(name: String): Boolean {
             return instance.requireLikeFunctionNames.contains(name) || name == Constants.WORD_REQUIRE
+        }
+
+        fun isImportLikeFunctionName(name: String): Boolean {
+            return name == Constants.WORD_IMPORT;
         }
     }
 }

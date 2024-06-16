@@ -17,7 +17,9 @@
 package com.tang.intellij.lua.project;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -41,8 +43,9 @@ import java.util.SortedMap;
 /**
  * Created by tangzx on 2017/6/12.
  */
-public class LuaSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
+public class LuaSettingsPanel implements SearchableConfigurable{
     private final LuaSettings settings;
+    private LuaProjectSettings projectSettings;
     private JPanel myPanel;
     private JTextField constructorNames;
     private JCheckBox strictDoc;
@@ -52,6 +55,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
     private JCheckBox nilStrict;
     private JCheckBox recognizeGlobalNameAsCheckBox;
     private LuaAdditionalSourcesRootPanel additionalRoots;
+    private LuaSourcesRootPanel sourceRoots;
     private JCheckBox enableGenericCheckBox;
     private JCheckBox captureOutputDebugString;
     private JCheckBox captureStd;
@@ -59,8 +63,19 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
     private JComboBox<LuaLanguageLevel> languageLevel;
     private JTextField requireFunctionNames;
     private JTextField tooLargerFileThreshold;
+    private JCheckBox enableStringIntelliSense;
 
     public LuaSettingsPanel() {
+        DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
+        if(context != null){
+            context.getData(PlatformDataKeys.PROJECT);
+            Project project = context.getData(PlatformDataKeys.PROJECT);
+            if(project != null){
+                this.projectSettings = LuaProjectSettings.Companion.getInstance(project);
+                sourceRoots.setRoots(projectSettings.getSourceRoot());
+            }
+        }
+
         this.settings = LuaSettings.Companion.getInstance();
         constructorNames.setText(settings.getConstructorNamesString());
         strictDoc.setSelected(settings.isStrictDoc());
@@ -71,6 +86,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
         recognizeGlobalNameAsCheckBox.setSelected(settings.isRecognizeGlobalNameAsType());
         additionalRoots.setRoots(settings.getAdditionalSourcesRoot());
         enableGenericCheckBox.setSelected(settings.getEnableGeneric());
+        enableStringIntelliSense.setSelected(settings.getEnableStringIntelliSense());
         requireFunctionNames.setText(settings.getRequireLikeFunctionNamesString());
         tooLargerFileThreshold.setDocument(new IntegerDocument());
         tooLargerFileThreshold.setText(String.valueOf(settings.getTooLargerFileThreshold()));
@@ -119,11 +135,13 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
                 settings.isNilStrict() != nilStrict.isSelected() ||
                 settings.isRecognizeGlobalNameAsType() != recognizeGlobalNameAsCheckBox.isSelected() ||
                 settings.getEnableGeneric() != enableGenericCheckBox.isSelected() ||
+                settings.getEnableStringIntelliSense() != enableStringIntelliSense.isSelected() ||
                 settings.getAttachDebugCaptureOutput() != captureOutputDebugString.isSelected() ||
                 settings.getAttachDebugCaptureStd() != captureStd.isSelected() ||
                 settings.getAttachDebugDefaultCharsetName() != defaultCharset.getSelectedItem() ||
                 settings.getLanguageLevel() != languageLevel.getSelectedItem() ||
-                !Arrays.equals(settings.getAdditionalSourcesRoot(), additionalRoots.getRoots(), String::compareTo);
+                !Arrays.equals(settings.getAdditionalSourcesRoot(), additionalRoots.getRoots(), String::compareTo) ||
+                (projectSettings != null && !Arrays.equals(projectSettings.getSourceRoot(), sourceRoots.getRoots(), String::compareTo));
     }
 
     @Override
@@ -141,6 +159,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
         settings.setRecognizeGlobalNameAsType(recognizeGlobalNameAsCheckBox.isSelected());
         settings.setAdditionalSourcesRoot(additionalRoots.getRoots());
         settings.setEnableGeneric(enableGenericCheckBox.isSelected());
+        settings.setEnableStringIntelliSense(enableStringIntelliSense.isSelected());
         settings.setAttachDebugCaptureOutput(captureOutputDebugString.isSelected());
         settings.setAttachDebugCaptureStd(captureStd.isSelected());
         settings.setAttachDebugDefaultCharsetName((String) Objects.requireNonNull(defaultCharset.getSelectedItem()));
@@ -154,6 +173,9 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
             for (Project project : ProjectManager.getInstance().getOpenProjects()) {
                 DaemonCodeAnalyzer.getInstance(project).restart();
             }
+        }
+        if(projectSettings != null){
+            projectSettings.setSourceRoot(sourceRoots.getRoots());
         }
     }
 

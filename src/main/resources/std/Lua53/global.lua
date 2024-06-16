@@ -276,6 +276,10 @@ function rawset(table, index, value) end
 ---@return any
 function require(modname) end
 
+---@param classname string
+---@return UClass
+function import(classname) end
+
 ---
 --- If `index` is a number, returns all arguments after argument number
 --- `index`. a negative number indexes from the end (-1 is the last argument).

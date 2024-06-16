@@ -5,6 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -51,9 +52,7 @@ val buildDataList = listOf(
     ),
     BuildData(
         ideaSDKShortVersion = "231",
-        // 223.7571.123-EAP-SNAPSHOT
-        // LATEST-EAP-SNAPSHOT
-        ideaSDKVersion = "233.11799.6-EAP-SNAPSHOT",
+        ideaSDKVersion = "2023.3.1",
         sinceBuild = "232",
         untilBuild = "233.*",
         bunch = "212",
@@ -66,7 +65,7 @@ val buildVersion = System.getProperty("IDEA_VER") ?: buildDataList.first().ideaS
 
 val buildVersionData = buildDataList.find { it.ideaSDKShortVersion == buildVersion }!!
 
-val emmyDebuggerVersion = "1.3.0"
+val emmyDebuggerVersion = "1.7.1"
 
 val resDir = "src/main/resources"
 
@@ -112,7 +111,7 @@ task("downloadEmmyDebugger", type = Download::class) {
 }
 
 task("unzipEmmyDebugger", type = Copy::class) {
-    dependsOn("downloadEmmyDebugger")
+//    dependsOn("downloadEmmyDebugger")
     from(zipTree("temp/win32-x86.zip")) {
         into("windows/x86")
     }
@@ -132,7 +131,7 @@ task("unzipEmmyDebugger", type = Copy::class) {
 }
 
 task("installEmmyDebugger", type = Copy::class) {
-    dependsOn("unzipEmmyDebugger")
+//    dependsOn("unzipEmmyDebugger")
     from("temp/windows/x64/") {
         include("emmy_core.dll")
         into("debugger/emmy/windows/x64")
@@ -197,25 +196,25 @@ project(":") {
         doLast {
             val rev = getRev()
             // reset
-            exec {
-                executable = "git"
-                args("reset", "HEAD", "--hard")
-            }
-            // clean untracked files
-            exec {
-                executable = "git"
-                args("clean", "-d", "-f")
-            }
+//            exec {
+//                executable = "git"
+//                args("reset", "HEAD", "--hard")
+//            }
+//            // clean untracked files
+//            exec {
+//                executable = "git"
+//                args("clean", "-d", "-f")
+//            }
             // switch
             exec {
                 executable = if (isWin) "bunch/bin/bunch.bat" else "bunch/bin/bunch"
                 args("switch", ".", buildVersionData.bunch)
             }
-            // reset to HEAD
-            exec {
-                executable = "git"
-                args("reset", rev)
-            }
+//            // reset to HEAD
+//            exec {
+//                executable = "git"
+//                args("reset", rev)
+//            }
         }
     }
 

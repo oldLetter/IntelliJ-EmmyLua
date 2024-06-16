@@ -189,3 +189,26 @@ fun resolveRequireFile(pathString: String?, project: Project): LuaPsiFile? {
     }
     return null
 }
+
+//fun resolveImportClass(className: String?, context: SearchContext): LuaTypeGuessable? {
+//    if (className == null)
+//        return null
+//    var resolveResult: LuaTypeGuessable? = null
+//    val moduleName = Constants.WORD_G
+//    LuaShortNamesManager.getInstance(context.project).processMembers(moduleName, className, context, {
+//        resolveResult = it
+//        false
+//    })
+//    return resolveResult
+//}
+fun resolveImportClass(className: String?, context: SearchContext): LuaClass? {
+    if (className == null)
+        return null
+    var resolveResult: LuaClass? = null
+    LuaShortNamesManager.getInstance(context.project).processClassesWithName(className, context) {
+        resolveResult = it
+        true
+    }
+    return resolveResult
+}
+

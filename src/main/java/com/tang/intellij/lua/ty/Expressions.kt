@@ -170,19 +170,35 @@ private fun LuaCallExpr.infer(context: SearchContext): ITy {
     // xxx()
     val expr = luaCallExpr.expr
     // 从 require 'xxx' 中获取返回类型
-    if (expr is LuaNameExpr && LuaSettings.isRequireLikeFunctionName(expr.name)) {
-        var filePath: String? = null
-        val string = luaCallExpr.firstStringArg
-        if (string is LuaLiteralExpr) {
-            filePath = string.stringValue
-        }
-        var file: LuaPsiFile? = null
-        if (filePath != null)
-            file = resolveRequireFile(filePath, luaCallExpr.project)
-        if (file != null)
-            return file.guessType(context)
+    if (expr is LuaNameExpr) {
+        if (LuaSettings.isRequireLikeFunctionName(expr.name)) {
+            var filePath: String? = null
+            val string = luaCallExpr.firstStringArg
+            if (string is LuaLiteralExpr) {
+                filePath = string.stringValue
+            }
+            var file: LuaPsiFile? = null
+            if (filePath != null)
+                file = resolveRequireFile(filePath, luaCallExpr.project)
+            if (file != null)
+                return file.guessType(context)
 
-        return Ty.UNKNOWN
+            return Ty.UNKNOWN
+        }
+        if(LuaSettings.isImportLikeFunctionName(expr.name)) {
+            var className: String? = null
+            val string = luaCallExpr.firstStringArg
+            if (string is LuaLiteralExpr) {
+                className = string.stringValue
+            }
+            if (className != null) {
+                val resolve = resolveImportClass(className, SearchContext.get(luaCallExpr.project))
+                if (resolve != null)
+                    return resolve.type
+            }
+
+            return Ty.UNKNOWN
+        }
     }
 
     var ret: ITy = Ty.UNKNOWN

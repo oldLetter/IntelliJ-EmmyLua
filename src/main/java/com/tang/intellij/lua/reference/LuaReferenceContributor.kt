@@ -64,6 +64,9 @@ class LuaReferenceContributor : PsiReferenceContributor() {
                 if (LuaSettings.isRequireLikeFunctionName(nameRef.getText())) {
                     return arrayOf(LuaRequireReference(expr))
                 }
+                else if(LuaSettings.isImportLikeFunctionName(nameRef.getText())){
+                    return arrayOf(LuaImportReference(expr))
+                }
             }
             return PsiReference.EMPTY_ARRAY
         }

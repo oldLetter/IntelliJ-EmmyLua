@@ -50,6 +50,8 @@ class LuaCompletionContributor : CompletionContributor() {
 
         extend(CompletionType.BASIC, SHOW_REQUIRE_PATH, RequirePathCompletionProvider())
 
+        extend(CompletionType.BASIC, SHOW_IMPORT_CLASS, ImportClassCompletionProvider())
+
         extend(CompletionType.BASIC, LuaStringArgHistoryProvider.STRING_ARG, LuaStringArgHistoryProvider())
 
         //提示全局函数,local变量,local函数
@@ -136,6 +138,14 @@ class LuaCompletionContributor : CompletionContributor() {
                         )
                 )
 
+        private val SHOW_IMPORT_CLASS = psiElement(LuaTypes.STRING)
+            .withParent(
+                psiElement(LuaTypes.LITERAL_EXPR).withParent(
+                    psiElement(LuaArgs::class.java).afterSibling(
+                        psiElement().with(ImportLikePatternCondition())
+                    )
+                )
+            )
         private val GOTO = psiElement(LuaTypes.ID).withParent(LuaGotoStat::class.java)
 
         private val IN_TABLE_FIELD = psiElement().andOr(
@@ -172,5 +182,12 @@ class RequireLikePatternCondition : PatternCondition<PsiElement>("requireLike"){
     override fun accepts(psi: PsiElement, context: ProcessingContext?): Boolean {
         val name = (psi as? PsiNamedElement)?.name
         return if (name != null) LuaSettings.isRequireLikeFunctionName(name) else false
+    }
+}
+
+class ImportLikePatternCondition : PatternCondition<PsiElement>("importLike"){
+    override fun accepts(psi: PsiElement, context: ProcessingContext?): Boolean {
+        val name = (psi as? PsiNamedElement)?.name
+        return if (name != null) LuaSettings.isImportLikeFunctionName(name) else false
     }
 }
