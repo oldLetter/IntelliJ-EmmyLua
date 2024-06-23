@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReference
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.IElementType
 import com.tang.intellij.lua.lang.type.LuaString
@@ -74,5 +75,8 @@ abstract class LuaLiteralExprMixin
             return content.start >= 2
         }
         return false
+    }
+    override fun getReference(): PsiReference? {
+        return references.firstOrNull()
     }
 }

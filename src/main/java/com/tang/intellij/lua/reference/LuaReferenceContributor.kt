@@ -19,8 +19,11 @@ package com.tang.intellij.lua.reference
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.tang.intellij.lua.lang.type.LuaString
 import com.tang.intellij.lua.project.LuaSettings
 import com.tang.intellij.lua.psi.*
+import com.tang.intellij.lua.psi.impl.LuaListArgsImpl
+import com.tang.intellij.lua.psi.impl.LuaTableFieldImpl
 
 /**
  * reference contributor
@@ -33,6 +36,7 @@ class LuaReferenceContributor : PsiReferenceContributor() {
         psiReferenceRegistrar.registerReferenceProvider(psiElement().withElementType(LuaTypes.NAME_EXPR), NameReferenceProvider())
         psiReferenceRegistrar.registerReferenceProvider(psiElement().withElementType(LuaTypes.GOTO_STAT), GotoReferenceProvider())
         psiReferenceRegistrar.registerReferenceProvider(psiElement().withElementType(LuaTypes.FUNC_DEF), FuncReferenceProvider())
+        psiReferenceRegistrar.registerReferenceProvider(psiElement().withElementType(LuaTypes.LITERAL_EXPR), LuaStringReferenceProvider())
     }
 
     internal inner class FuncReferenceProvider : PsiReferenceProvider() {
@@ -90,6 +94,16 @@ class LuaReferenceContributor : PsiReferenceContributor() {
     internal inner class NameReferenceProvider : PsiReferenceProvider() {
         override fun getReferencesByElement(psiElement: PsiElement, processingContext: ProcessingContext): Array<PsiReference> {
             return arrayOf(LuaNameReference(psiElement as LuaNameExpr))
+        }
+    }
+
+    internal inner class LuaStringReferenceProvider : PsiReferenceProvider() {
+        override fun getReferencesByElement(psiElement: PsiElement, processingContext: ProcessingContext): Array<PsiReference> {
+            val literalExpr = psiElement as LuaLiteralExpr
+            if(literalExpr.parent is LuaListArgsImpl || literalExpr.parent is LuaTableFieldImpl){
+                return arrayOf(LuaStringReference(psiElement))
+            }
+            return PsiReference.EMPTY_ARRAY
         }
     }
 }

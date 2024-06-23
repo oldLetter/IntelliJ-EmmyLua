@@ -59,6 +59,11 @@ class LuaCompletionContributor : CompletionContributor() {
 
         extend(CompletionType.BASIC, IN_CLASS_METHOD_NAME, LocalAndGlobalCompletionProvider(LocalAndGlobalCompletionProvider.VARS))
 
+        if(LuaSettings.instance.enableStringIntelliSense){
+            //string输入补全,local变量,全局变量,成员变量
+            extend(CompletionType.BASIC, IN_NAME_STRING, StringCompletionProvider())
+        }
+
         extend(CompletionType.BASIC, GOTO, object : CompletionProvider<CompletionParameters>(){
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet) {
                 LuaPsiTreeUtil.walkUpLabel(parameters.position) {
@@ -123,6 +128,9 @@ class LuaCompletionContributor : CompletionContributor() {
 
         private val IN_NAME_EXPR = psiElement(LuaTypes.ID)
                 .withParent(LuaNameExpr::class.java)
+
+        private val IN_NAME_STRING = psiElement().andOr(psiElement(LuaTypes.STRING).withParent(psiElement(LuaLiteralExpr::class.java).withParent(LuaTableField::class.java)),
+                psiElement(LuaTypes.STRING).withParent(psiElement(LuaLiteralExpr::class.java).withParent(LuaListArgs::class.java)))
 
         private val SHOW_OVERRIDE = psiElement()
                 .withParent(LuaClassMethodName::class.java)

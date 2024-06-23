@@ -34,6 +34,14 @@ fun resolveLocal(refName:String, ref: PsiElement, context: SearchContext? = null
 
 fun resolveInFile(refName:String, pin: PsiElement, context: SearchContext?): PsiElement? {
     var ret: PsiElement? = null
+    val types = PsiTreeUtil.getChildrenOfTypeAsList(pin.containingFile, LuaDeclaration::class.java)
+    for (type in types){
+        LuaDeclarationTree.get(pin.containingFile).walkUp(type) { decl ->
+            if (decl.name == refName)
+                ret = decl.firstDeclaration.psi
+            ret == null
+        }
+    }
     LuaDeclarationTree.get(pin.containingFile).walkUp(pin) { decl ->
         if (decl.name == refName)
             ret = decl.firstDeclaration.psi
