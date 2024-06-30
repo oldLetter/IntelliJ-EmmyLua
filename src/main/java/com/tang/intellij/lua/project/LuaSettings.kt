@@ -61,7 +61,7 @@ class LuaSettings : PersistentStateComponent<LuaSettings> {
      */
     var enableGeneric: Boolean = false
 
-    var enableStringIntelliSense: Boolean = false
+    var enableStringIntelliSense: Boolean = true
 
     /**
      * (KB)

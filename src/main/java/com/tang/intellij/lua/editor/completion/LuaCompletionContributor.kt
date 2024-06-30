@@ -195,10 +195,7 @@ class LuaCompletionContributor : CompletionContributor() {
 class StringCompletionIgnoreCondition : PatternCondition<PsiElement>("stringLike"){
     override fun accepts(psi: PsiElement, context: ProcessingContext?): Boolean {
         val name = (psi as? PsiNamedElement)?.name
-        if(name == null || LuaSettings.isRequireLikeFunctionName(name) || LuaSettings.isKGRequireLikeFunctionName(name) || LuaSettings.isImportLikeFunctionName(name)){
-            return false
-        }
-        return true;
+        return !(name == null || LuaSettings.isRequireLikeFunctionName(name) || LuaSettings.isKGRequireLikeFunctionName(name) || LuaSettings.isImportLikeFunctionName(name));
     }
 }
 
