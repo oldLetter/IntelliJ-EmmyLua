@@ -65,7 +65,7 @@ class LuaReferenceContributor : PsiReferenceContributor() {
             val expr = psiElement as LuaCallExpr
             val nameRef = expr.expr
             if (nameRef is LuaNameExpr) {
-                if (LuaSettings.isRequireLikeFunctionName(nameRef.getText())) {
+                if (LuaSettings.isRequireLikeFunctionName(nameRef.getText()) || LuaSettings.isKGRequireLikeFunctionName(nameRef.getText())) {
                     return arrayOf(LuaRequireReference(expr))
                 }
                 else if(LuaSettings.isImportLikeFunctionName(nameRef.getText())){
@@ -100,7 +100,17 @@ class LuaReferenceContributor : PsiReferenceContributor() {
     internal inner class LuaStringReferenceProvider : PsiReferenceProvider() {
         override fun getReferencesByElement(psiElement: PsiElement, processingContext: ProcessingContext): Array<PsiReference> {
             val literalExpr = psiElement as LuaLiteralExpr
-            if(literalExpr.parent is LuaListArgsImpl || literalExpr.parent is LuaTableFieldImpl){
+            if(literalExpr.parent is LuaTableFieldImpl){
+                return arrayOf(LuaStringReference(psiElement))
+            }
+            else if(literalExpr.parent is LuaListArgsImpl) {
+                val expr = literalExpr.parent.parent as LuaCallExpr
+                val nameRef = expr.expr
+                if (nameRef is LuaNameExpr && (LuaSettings.isRequireLikeFunctionName(nameRef.getText())
+                            || LuaSettings.isKGRequireLikeFunctionName(nameRef.getText())
+                            || LuaSettings.isImportLikeFunctionName(nameRef.getText()))) {
+                    return PsiReference.EMPTY_ARRAY
+                }
                 return arrayOf(LuaStringReference(psiElement))
             }
             return PsiReference.EMPTY_ARRAY

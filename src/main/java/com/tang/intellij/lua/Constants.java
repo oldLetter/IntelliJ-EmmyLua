@@ -36,5 +36,7 @@ public class Constants {
     public static final String WORD_TABLE = "table";
     public static final String WORD_FUNCTION = "function";
     public static final String WORD_REQUIRE = "require";
+
+    public static final String WORD_KG_REQUIRE = "kg_require";
     public static final String WORD_IMPORT = "import";
 }

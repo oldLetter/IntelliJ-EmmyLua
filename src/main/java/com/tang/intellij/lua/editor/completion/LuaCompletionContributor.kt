@@ -130,7 +130,13 @@ class LuaCompletionContributor : CompletionContributor() {
                 .withParent(LuaNameExpr::class.java)
 
         private val IN_NAME_STRING = psiElement().andOr(psiElement(LuaTypes.STRING).withParent(psiElement(LuaLiteralExpr::class.java).withParent(LuaTableField::class.java)),
-                psiElement(LuaTypes.STRING).withParent(psiElement(LuaLiteralExpr::class.java).withParent(LuaListArgs::class.java)))
+                psiElement(LuaTypes.STRING).withParent(
+                    psiElement(LuaTypes.LITERAL_EXPR).withParent(
+                        psiElement(LuaArgs::class.java).afterSibling(
+                            psiElement().with(StringCompletionIgnoreCondition())
+                        )
+                    )
+                ))
 
         private val SHOW_OVERRIDE = psiElement()
                 .withParent(LuaClassMethodName::class.java)
@@ -186,10 +192,20 @@ class LuaCompletionContributor : CompletionContributor() {
     }
 }
 
+class StringCompletionIgnoreCondition : PatternCondition<PsiElement>("stringLike"){
+    override fun accepts(psi: PsiElement, context: ProcessingContext?): Boolean {
+        val name = (psi as? PsiNamedElement)?.name
+        if(name == null || LuaSettings.isRequireLikeFunctionName(name) || LuaSettings.isKGRequireLikeFunctionName(name) || LuaSettings.isImportLikeFunctionName(name)){
+            return false
+        }
+        return true;
+    }
+}
+
 class RequireLikePatternCondition : PatternCondition<PsiElement>("requireLike"){
     override fun accepts(psi: PsiElement, context: ProcessingContext?): Boolean {
         val name = (psi as? PsiNamedElement)?.name
-        return if (name != null) LuaSettings.isRequireLikeFunctionName(name) else false
+        return if (name != null) (LuaSettings.isRequireLikeFunctionName(name) || LuaSettings.isKGRequireLikeFunctionName(name)) else false
     }
 }
 

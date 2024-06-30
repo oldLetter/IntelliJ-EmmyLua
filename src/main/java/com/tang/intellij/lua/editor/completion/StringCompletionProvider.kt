@@ -8,14 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
+import com.tang.intellij.lua.comment.psi.LuaDocTagSee
+import com.tang.intellij.lua.comment.psi.api.LuaComment
+import com.tang.intellij.lua.comment.psi.impl.LuaDocTagSeeImpl
 import com.tang.intellij.lua.lang.LuaIcons
 import com.tang.intellij.lua.psi.*
 import com.tang.intellij.lua.psi.impl.LuaAssignStatImpl
-import com.tang.intellij.lua.psi.impl.LuaClassMethodDefImpl
 import com.tang.intellij.lua.psi.impl.LuaTableExprImpl
 import com.tang.intellij.lua.psi.impl.LuaTableFieldImpl
 import com.tang.intellij.lua.search.SearchContext
 import com.tang.intellij.lua.ty.ITy
+import com.tang.intellij.lua.ty.ITyClass
+import com.tang.intellij.lua.ty.ITyFunction
 import com.tang.intellij.lua.ty.isVisibleInScope
 
 class StringCompletionProvider : ClassMemberCompletionProvider() {
@@ -23,11 +27,25 @@ class StringCompletionProvider : ClassMemberCompletionProvider() {
         val completionParameters = session.parameters
         val completionResultSet = session.resultSet
         val position = completionParameters.position
+        val prefixMatcher = completionResultSet.prefixMatcher
+        val luaCommentList = PsiTreeUtil.getChildrenOfTypeAsList(position.containingFile, LuaComment::class.java)
+        for(comment in luaCommentList){
+            if(comment.children[0] is LuaDocTagSeeImpl){
+                val seeRefTag = comment.children[0] as LuaDocTagSee
+                val classType = seeRefTag.classNameRef?.resolveType() as? ITyClass
+                val ctx = SearchContext.get(seeRefTag.project)
+                classType?.processMembers(ctx) { _, member ->
+                    if (member.guessType(ctx) is ITyFunction){
+                        completionResultSet.addElement(LookupElementBuilder.create(member.name!!).withIcon(LuaIcons.CLASS_METHOD))
+                    }
+                }
+            }
+        }
 
         val classMethods = PsiTreeUtil.getChildrenOfTypeAsList(position.containingFile, LuaClassMethodDef::class.java)
         for (classMethod in classMethods){
             classMethod.name?.let {
-                if(completionResultSet.prefixMatcher.prefixMatches(it)){
+                if(prefixMatcher.prefixMatches(it)){
                     completionResultSet.addElement(LookupElementBuilder.create(it).withIcon(LuaIcons.CLASS_METHOD))
                 }
             }

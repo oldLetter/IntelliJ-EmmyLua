@@ -25,6 +25,7 @@ import com.tang.intellij.lua.Constants
 import com.tang.intellij.lua.ext.recursionGuard
 import com.tang.intellij.lua.project.LuaSettings
 import com.tang.intellij.lua.psi.*
+import com.tang.intellij.lua.psi.impl.LuaAssignStatImpl
 import com.tang.intellij.lua.psi.impl.LuaNameExprMixin
 import com.tang.intellij.lua.psi.search.LuaShortNamesManager
 import com.tang.intellij.lua.search.GuardType
@@ -172,19 +173,40 @@ private fun LuaCallExpr.infer(context: SearchContext): ITy {
     // 从 require 'xxx' 中获取返回类型
     if (expr is LuaNameExpr) {
         if (LuaSettings.isRequireLikeFunctionName(expr.name)) {
-            var filePath: String? = null
-            val string = luaCallExpr.firstStringArg
-            if (string is LuaLiteralExpr) {
-                filePath = string.stringValue
-            }
-            var file: LuaPsiFile? = null
-            if (filePath != null)
-                file = resolveRequireFile(filePath, luaCallExpr.project)
-            if (file != null)
+            val file = getFilePsi(context,luaCallExpr)
+            if(file != null){
                 return file.guessType(context)
-
+            }
             return Ty.UNKNOWN
         }
+        if (LuaSettings.isKGRequireLikeFunctionName(expr.name)){
+            val file = getFilePsi(context,luaCallExpr)
+            if(file != null){
+                val ty = file.guessType(context)
+                if(ty != Ty.UNKNOWN){
+                    return ty
+                }else{
+                    val assignStats = PsiTreeUtil.getChildrenOfTypeAsList(file, LuaAssignStatImpl::class.java)
+                    if (assignStats.size == 1 && assignStats[0].text.contains("DefinClass")){
+                        return assignStats[0].varExprList.exprList[0].guessType(context)
+                    }else{
+                        val members = mutableListOf<LuaClassMember>()
+                        for (assignStat in assignStats){
+                            for (varExpr in assignStat.varExprList.exprList){
+                                if(varExpr is LuaNameExpr){
+                                    members.add(varExpr as LuaClassMember)
+                                }
+                            }
+                        }
+                        if(members.size > 0){
+                            return TyModuleClass(file.uid,file.uid,null,members)
+                        }
+                    }
+                }
+            }
+            return Ty.UNKNOWN
+        }
+
         if(LuaSettings.isImportLikeFunctionName(expr.name)) {
             var className: String? = null
             val string = luaCallExpr.firstStringArg
@@ -230,6 +252,19 @@ private fun LuaCallExpr.infer(context: SearchContext): ITy {
     return ret
 }
 
+private fun getFilePsi(context: SearchContext,luaCallExpr:LuaCallExpr): LuaPsiFile? {
+    var filePath: String? = null
+    val string = luaCallExpr.firstStringArg
+    if (string is LuaLiteralExpr) {
+        filePath = string.stringValue
+    }
+    var file: LuaPsiFile? = null
+    if (filePath != null)
+        file = resolveRequireFile(filePath, luaCallExpr.project)
+    if (file != null)
+        return file
+    return null;
+}
 private fun LuaNameExpr.infer(context: SearchContext): ITy {
     val set = recursionGuard(this, Computable {
         var type:ITy = Ty.UNKNOWN
@@ -379,7 +414,11 @@ private fun LuaIndexExpr.infer(context: SearchContext): ITy {
         if (propName != null) {
             val prefixType = parentTy ?: indexExpr.guessParentType(context)
             prefixType.eachTopClass(Processor { clazz ->
-                result = result.union(guessFieldType(propName, clazz, context))
+                if(clazz is TyModuleClass){
+                    result = clazz.findMember(propName,context)?.let { result.union(it.guessType(context)) }!!
+                }else{
+                    result = result.union(guessFieldType(propName, clazz, context))
+                }
                 true
             })
             
