@@ -187,7 +187,7 @@ private fun LuaCallExpr.infer(context: SearchContext): ITy {
                     return ty
                 }else{
                     val assignStats = PsiTreeUtil.getChildrenOfTypeAsList(file, LuaAssignStatImpl::class.java)
-                    if (assignStats.size == 1 && assignStats[0].text.contains("DefinClass")){
+                    if (assignStats.size == 1 && assignStats[0].text.contains("DefineClass")){
                         return assignStats[0].varExprList.exprList[0].guessType(context)
                     }else{
                         val members = mutableListOf<LuaClassMember>()
