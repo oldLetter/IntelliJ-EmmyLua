@@ -212,11 +212,7 @@ fun resolveRequireFile(pathString: String?, project: Project): LuaPsiFile? {
 fun resolveImportClass(className: String?, context: SearchContext): LuaClass? {
     if (className == null)
         return null
-    var resolveResult: LuaClass? = null
-    LuaShortNamesManager.getInstance(context.project).processClassesWithName(className, context) {
-        resolveResult = it
-        true
-    }
+    val resolveResult = LuaShortNamesManager.getInstance(context.project).findClass(className,context)
     return resolveResult
 }
 
